@@ -4,6 +4,7 @@ namespace Azhar25git\TaskMan\Controllers;
 
 use Azhar25git\TaskMan\Models\Task;
 use Azhar25git\TaskMan\Models\Assignable;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +18,7 @@ class TaskController extends Controller
      */
     public function index()
     {
-        return Task::with(['user'])->orderBy('create_at', 'DESC')->limit(20)->get();
+        return Task::orderBy('created_at', 'DESC')->limit(20)->get();
     }
 
     /**
@@ -39,12 +40,13 @@ class TaskController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'status' => 'required|string',
-            'title' => 'required|max:255',
-            'description' => 'required|string|max:1000',
-            'project_type' => 'required|string|max:91',
-            'user_ids.*.user_id' => 'sometimes|required|integer',            
+            'task.status' => 'required|string',
+            'task.title' => 'required|string|max:255',
+            'task.description' => 'required|string|max:1000',
+            'task.project_type' => 'required|string|max:91',
+            'task.user_ids.*.user_id' => 'sometimes|required|integer',            
         ]);
+
         try {
             DB::beginTransaction();
             $newTask = new Task;
@@ -58,14 +60,14 @@ class TaskController extends Controller
             foreach($users as $user){
                 $newAssignable = new Assignable;
                 $newAssignable->task_id = $newTask->id;
-                $newAssignable->user_id = $user->user_id;
+                $newAssignable->user_id = $user["user_id"];
                 $newAssignable->save();
             }
             DB::commit();
             return "Task assigned successfully.";
         }
 
-        catch (\PDOException $e) {
+        catch (\Exception $e) {
             // Woopsy
             DB::rollBack();
         }
@@ -105,12 +107,12 @@ class TaskController extends Controller
     public function update(Request $request, Task $task)
     {
         $validated = $request->validate([
-            'status' => 'required|string',
-            'title' => 'required|max:255',
-            'description' => 'required|string|max:1000',
-            'project_type' => 'required|string|max:91',
-            'task_id' => 'required|integer',
-            'user_ids.*.user_id' => 'sometimes|required|integer',            
+            'task.status' => 'required|string',
+            'task.title' => 'required|string|max:255',
+            'task.description' => 'required|string|max:1000',
+            'task.project_type' => 'required|string|max:91',
+            'task.user_ids.*.user_id' => 'sometimes|required|integer',  
+            'task.task_id' => 'required|integer',           
         ]);
 
         try {
@@ -131,7 +133,7 @@ class TaskController extends Controller
             foreach($users as $user){
                 $newAssignable = new Assignable;
                 $newAssignable->task_id = $existingTask->id;
-                $newAssignable->user_id = $user->user_id;
+                $newAssignable->user_id = $user["user_id"];
                 $newAssignable->save();
             }
             DB::commit();
@@ -171,8 +173,26 @@ class TaskController extends Controller
     public function searchAssignable($input)
     {
         $users = DB::table('users')->where('email', $input)
-        ->orWhere('name', 'like', '%' . $input . '%')->get();
-
+        ->orWhere('name', 'like', '%' . $input . '%')->get(['name','email','id']);
         return $users;
+    }
+    /**
+     * Get the users of assigned task
+     * 
+     * @param  string
+     * @return \Illuminate\Http\Response
+     */
+    public function getAssigned($task)
+    {
+        $task = Task::find($task);
+        if($task) {
+            $users_id = Assignable::where('task_id', $task->id)->get('user_id');
+            if(count($users_id)>0){
+                $users = User::whereIn('id', $users_id)->get(['id','name','email']);
+                return $users;
+            }
+            return "Assigned To not found.";
+        }
+        return "Task not found.";
     }
 }

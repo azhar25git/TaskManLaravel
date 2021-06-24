@@ -8,7 +8,8 @@ Route::prefix('tm-api')->group(function () {
 
     Route::group(['middleware' => ['api']], function () {
         Route::resource('task', TaskController::class);
-        Route::get('search', [TaskController::class, 'searchAssignable'])->name('search');
+        Route::get('search/{input}', [TaskController::class, 'searchAssignable'])->name('search');
+        Route::get('task/{task}/assigned', [TaskController::class, 'getAssigned'])->name('getassigned');
     });
 
 });

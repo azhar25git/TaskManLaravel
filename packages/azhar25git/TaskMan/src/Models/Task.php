@@ -9,8 +9,15 @@ class Task extends Model
 {
     use HasFactory;
 
+    /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
+    protected $table = 'tasks';
+
     public function users() {
 
-        return $this->hasManyThrough(User::class, Assignable::class);
+        return $this->hasManyThrough(Assignable::class, User::class);
     }
 }

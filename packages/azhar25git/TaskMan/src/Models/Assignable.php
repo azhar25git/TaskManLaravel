@@ -9,6 +9,13 @@ class Assignable extends Model
 {
     use HasFactory;
 
+    /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
+    protected $table = 'assignable_task';
+
     public function tasks() {
         
         return $this->belongsToMany(Task::class);
@@ -16,6 +23,6 @@ class Assignable extends Model
 
     public function users() {
 
-        return $this->belongsToMany(User::class);
+        return $this->hasMany(User::class);
     }
 }
