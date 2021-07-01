@@ -18,7 +18,8 @@
                     <CcNotification :iconWIdth="20" :totalNotification="3" />
                 </div>
                 <div class="header-propic-container">
-                    <CcProfileImage :height="45" image="https://avatars.githubusercontent.com/u/4?v=4" status="active" title="James Anderson" />
+                    <!-- <CcProfileImage :height="45" image="https://avatars.githubusercontent.com/u/4?v=4" status="active" title="James Anderson" /> -->
+                    <CcProfileImage :height="45" v-model="assignee" :image="assignee.avatar" status="active" :title="assignee.name" />
                 </div>            
             </div>
         </div>
@@ -29,12 +30,36 @@
     import CcMainsearch from '../../components/cc-mainsearch.vue'
     import CcProfileImage from '../../components/cc-profile-image.vue'
     import CcNotification from '../../components/cc-notification.vue'
+    import axios from 'axios';
 
     import controller from './controller.js'
     const { menu, navbar, toggleMenu, menuTotalSpace} = controller;
-    import { ref  } from 'vue'
+    import { ref, onMounted  } from 'vue'
     const select = ref(null)
     const ShowFullSearch = ref(false)
+    import {useStore} from 'vuex'
+
+    const store = useStore()
+    let assignee = ref({
+        id: 0,
+        name: '',
+        avatar: ''
+    });
+    const getAssigneeUser = async () => {
+        var user = await store.dispatch('getAssignee')
+        user = await user[0]
+        return user
+    }
+
+    onMounted(async () => {
+        let valueNew = await getAssigneeUser()
+        assignee.value =  {
+            id: valueNew.id,
+            name: valueNew.name,
+            avatar: valueNew.avatar
+        }
+        // console.log(assignee)
+    })
 </script>
 
 <style lang="scss">

@@ -1,12 +1,12 @@
 <template>
     <div ref="cardRoot">
-        <div class="cc-task">
+        <div class="cc-task" :task_id="props.task_id">
             <div class="cc-task-title"><CcTitle :fontSize="18" :status="props.cardDetail.type" :title="props.cardDetail.title" /></div>
             <div class="cc-task-description">{{props.cardDetail.description}}</div>
             <CcDivider />
             <div class="cc-task-option">
                 <div class="cc-task-users">
-                    <CcPropicList :height="32" :list="props.cardDetail.assignedUser" listTarget="avatar_url" />
+                    <CcPropicList :height="32" :list="props.cardDetail.assignedUser" listTarget="avatar" />
                 </div>
                 <div class="cc-task-btn">
                     <CcButtonDropdown>
@@ -54,8 +54,8 @@
                   </div>
                   <div class="tsm-employee-list">
                       <div v-for="(item, index) in taskItem.assignedUser" :key="index" class="tsm-employee-list-item">
-                          <div  class="tsm-employee-list-image"><img :src="item.avatar_url" style="width:40px" /></div>
-                          <div class="tsm-employee-list-text">{{item.login}}</div>
+                          <div  class="tsm-employee-list-image"><img :src="item.avatar" style="width:40px" /></div>
+                          <div class="tsm-employee-list-text">{{item.name}}</div>
                           <div class="tsm-employee-list-delete">
                               <img src="/icons/close.svg" style="width:10px" />
                           </div>
@@ -86,6 +86,8 @@
 
     import lodash from 'lodash'
     import {useStore} from 'vuex'
+    import axios from 'axios'
+
     const store = useStore()
 
     const props = defineProps({
@@ -98,6 +100,7 @@
     const editTaskPage = ref('gen');
     const srcEmployeeInput = ref('');
     const taskItem = reactive({
+        id:null,
         title:null,
         description: null,
         type:'Importent',
@@ -107,6 +110,7 @@
     const options = reactive(['Importent','Irrelevant', 'Default']);
     const editTaskEvent = (source) => {
         modal.value = true;
+        taskItem.id = props.task_id;
         taskItem.assignedUser = lodash.cloneDeep(props.cardDetail.assignedUser);
         taskItem.title = props.cardDetail.title;
         taskItem.description = props.cardDetail.description;
@@ -116,7 +120,7 @@
     const srcEmployeeOptions = computed(()=>{
         var re = new RegExp(srcEmployeeInput.value, "i");
         return props.userList.filter((item) => {
-            return re.test(item.login)
+            return re.test(item.name)
         })
 
     })
@@ -136,10 +140,13 @@
             var data = await store.state.doneTask
         } 
         var index = data.indexOf(props.cardDetail)
+        await callBackendUpdate();
         data[index]=lodash.cloneDeep(taskItem);
+
         modal.value = false;
     }
     const deleteData = async () => {
+        await callBackendDelete();
         var classes = cardRoot.value.parentElement;
         if(classes.closest('.todo-todo') != null){
             var data = await store.state.toDo
@@ -152,6 +159,44 @@
         } 
         var index = data.indexOf(props.cardDetail)
         data.splice(index, 1);
+    }
+
+    const callBackendUpdate = async () => {
+        console.log(props.cardDetail)
+        var newusers = [];
+        var newuserId;
+        for (var i = 0; i < taskItem.assignedUser.length; i++) {
+            newuserId = taskItem.assignedUser[i].id;
+            newusers.push({"user_id":newuserId});
+        }
+        await axios.put('tm-api/task/'+ props.task_id, {
+            "task": {
+                "task_id": props.task_id,
+                "title": taskItem.title,
+                "description": taskItem.description,
+                "status": taskItem.source,
+                "project_type": taskItem.type,
+                "user_ids": newusers
+            }
+        })
+        .then(response => {
+            console.log(response)
+        })
+        .catch(err =>{ console.log('tm-api:',err)});
+    }
+
+    const callBackendDelete = async () => {
+        var newusers = [];
+        var newuserId;
+        for (var i = 0; i < taskItem.assignedUser.length; i++) {
+            newuserId = taskItem.assignedUser[i].id;
+            newusers.push({"user_id":newuserId});
+        }
+        await axios.delete('tm-api/task/'+ props.task_id)
+        .then(response => {
+            console.log(response)
+        })
+        .catch(err =>{ console.log('tm-api:',err)});
     }
 </script>
 

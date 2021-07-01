@@ -19,6 +19,8 @@ class CreateTasksTable extends Migration
             $table->string('title');
             $table->text('description');
             $table->string('project_type');
+            $table->unsignedBigInteger('assignee_user_id');
+            $table->foreign('assignee_user_id')->references('id')->on('users')->onDelete('cascade');
             $table->timestamps();
         });
     }

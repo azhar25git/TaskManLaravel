@@ -215,11 +215,24 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _components_cc_mainsearch_vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../components/cc-mainsearch.vue */ "./resources/js/axil-main/src/components/cc-mainsearch.vue");
-/* harmony import */ var _components_cc_profile_image_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../components/cc-profile-image.vue */ "./resources/js/axil-main/src/components/cc-profile-image.vue");
-/* harmony import */ var _components_cc_notification_vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../components/cc-notification.vue */ "./resources/js/axil-main/src/components/cc-notification.vue");
-/* harmony import */ var _controller_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./controller.js */ "./resources/js/axil-main/src/layouts/main/controller.js");
-/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm-bundler.js");
+/* harmony import */ var _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @babel/runtime/regenerator */ "./node_modules/@babel/runtime/regenerator/index.js");
+/* harmony import */ var _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _components_cc_mainsearch_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../components/cc-mainsearch.vue */ "./resources/js/axil-main/src/components/cc-mainsearch.vue");
+/* harmony import */ var _components_cc_profile_image_vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../components/cc-profile-image.vue */ "./resources/js/axil-main/src/components/cc-profile-image.vue");
+/* harmony import */ var _components_cc_notification_vue__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../components/cc-notification.vue */ "./resources/js/axil-main/src/components/cc-notification.vue");
+/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! axios */ "./node_modules/axios/index.js");
+/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(axios__WEBPACK_IMPORTED_MODULE_4__);
+/* harmony import */ var _controller_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./controller.js */ "./resources/js/axil-main/src/layouts/main/controller.js");
+/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm-bundler.js");
+/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm-bundler.js");
+
+
+function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
+
+function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
+
+
+
 
 
 
@@ -228,12 +241,64 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   expose: [],
   setup: function setup(__props) {
-    var menu = _controller_js__WEBPACK_IMPORTED_MODULE_3__.default.menu,
-        navbar = _controller_js__WEBPACK_IMPORTED_MODULE_3__.default.navbar,
-        toggleMenu = _controller_js__WEBPACK_IMPORTED_MODULE_3__.default.toggleMenu,
-        menuTotalSpace = _controller_js__WEBPACK_IMPORTED_MODULE_3__.default.menuTotalSpace;
-    var select = (0,vue__WEBPACK_IMPORTED_MODULE_4__.ref)(null);
-    var ShowFullSearch = (0,vue__WEBPACK_IMPORTED_MODULE_4__.ref)(false);
+    var menu = _controller_js__WEBPACK_IMPORTED_MODULE_5__.default.menu,
+        navbar = _controller_js__WEBPACK_IMPORTED_MODULE_5__.default.navbar,
+        toggleMenu = _controller_js__WEBPACK_IMPORTED_MODULE_5__.default.toggleMenu,
+        menuTotalSpace = _controller_js__WEBPACK_IMPORTED_MODULE_5__.default.menuTotalSpace;
+    var select = (0,vue__WEBPACK_IMPORTED_MODULE_6__.ref)(null);
+    var ShowFullSearch = (0,vue__WEBPACK_IMPORTED_MODULE_6__.ref)(false);
+    var store = (0,vuex__WEBPACK_IMPORTED_MODULE_7__.useStore)();
+    var assignee = (0,vue__WEBPACK_IMPORTED_MODULE_6__.reactive)('');
+
+    var getAssigneeUser = /*#__PURE__*/function () {
+      var _ref = _asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee() {
+        var user;
+        return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                _context.next = 2;
+                return store.dispatch('getAssignee');
+
+              case 2:
+                user = _context.sent;
+                _context.next = 5;
+                return user.data;
+
+              case 5:
+                assignee = _context.sent;
+
+              case 6:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee);
+      }));
+
+      return function getAssigneeUser() {
+        return _ref.apply(this, arguments);
+      };
+    }();
+
+    (0,vue__WEBPACK_IMPORTED_MODULE_6__.onMounted)( /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().mark(function _callee2() {
+      return _babel_runtime_regenerator__WEBPACK_IMPORTED_MODULE_0___default().wrap(function _callee2$(_context2) {
+        while (1) {
+          switch (_context2.prev = _context2.next) {
+            case 0:
+              _context2.next = 2;
+              return getAssigneeUser();
+
+            case 2:
+              console.log('assignee', assignee);
+
+            case 3:
+            case "end":
+              return _context2.stop();
+          }
+        }
+      }, _callee2);
+    })));
     return {
       menu: menu,
       navbar: navbar,
@@ -241,11 +306,19 @@ __webpack_require__.r(__webpack_exports__);
       menuTotalSpace: menuTotalSpace,
       select: select,
       ShowFullSearch: ShowFullSearch,
-      CcMainsearch: _components_cc_mainsearch_vue__WEBPACK_IMPORTED_MODULE_0__.default,
-      CcProfileImage: _components_cc_profile_image_vue__WEBPACK_IMPORTED_MODULE_1__.default,
-      CcNotification: _components_cc_notification_vue__WEBPACK_IMPORTED_MODULE_2__.default,
-      controller: _controller_js__WEBPACK_IMPORTED_MODULE_3__.default,
-      ref: vue__WEBPACK_IMPORTED_MODULE_4__.ref
+      store: store,
+      assignee: assignee,
+      getAssigneeUser: getAssigneeUser,
+      CcMainsearch: _components_cc_mainsearch_vue__WEBPACK_IMPORTED_MODULE_1__.default,
+      CcProfileImage: _components_cc_profile_image_vue__WEBPACK_IMPORTED_MODULE_2__.default,
+      CcNotification: _components_cc_notification_vue__WEBPACK_IMPORTED_MODULE_3__.default,
+      axios: (axios__WEBPACK_IMPORTED_MODULE_4___default()),
+      controller: _controller_js__WEBPACK_IMPORTED_MODULE_5__.default,
+      ref: vue__WEBPACK_IMPORTED_MODULE_6__.ref,
+      reactive: vue__WEBPACK_IMPORTED_MODULE_6__.reactive,
+      onMounted: vue__WEBPACK_IMPORTED_MODULE_6__.onMounted,
+      computed: vue__WEBPACK_IMPORTED_MODULE_6__.computed,
+      useStore: vuex__WEBPACK_IMPORTED_MODULE_7__.useStore
     };
   }
 });
@@ -735,12 +808,14 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   , ["modelValue"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)("div", _hoisted_9, [_hoisted_10, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)("div", _hoisted_11, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)($setup["CcNotification"], {
     iconWIdth: 20,
     totalNotification: 3
-  })]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)("div", _hoisted_12, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)($setup["CcProfileImage"], {
+  })]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)("div", _hoisted_12, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)(" <CcProfileImage :height=\"45\" image=\"https://avatars.githubusercontent.com/u/4?v=4\" status=\"active\" title=\"James Anderson\" /> "), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)($setup["CcProfileImage"], {
     height: 45,
-    image: "https://avatars.githubusercontent.com/u/4?v=4",
+    image: $setup.assignee.avatar,
     status: "active",
-    title: "James Anderson"
-  })])])])) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true)], 4
+    title: $setup.assignee.name
+  }, null, 8
+  /* PROPS */
+  , ["image", "title"])])])])) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true)], 4
   /* STYLE */
   );
 }

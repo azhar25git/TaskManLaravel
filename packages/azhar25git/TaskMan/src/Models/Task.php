@@ -16,8 +16,12 @@ class Task extends Model
      */
     protected $table = 'tasks';
 
-    public function users() {
+    public function assigned_to() {
 
-        return $this->hasManyThrough(Assignable::class, User::class);
+        return $this->hasManyThrough(User::class, Assignable::class, 'user_id', 'id', 'id', 'id');
+    }
+    public function assignee() {
+
+        return $this->hasOne(User::class,'id', 'assignee_user_id');
     }
 }

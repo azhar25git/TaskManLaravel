@@ -12,8 +12,8 @@
                 <div class="cc-select-options" v-if="toggleOptions">
                     <div class="cc-select-option-item-container">
                         <div class="cc-select-option" v-for="(item, index) in props.options" :key="index" @click="selectedItem(item)">
-                            <div class="cc-select-option-image"><img :src="item.avatar_url" style="width:50px" /></div>
-                            <div class="cc-select-option-text">{{item.login}}</div>
+                            <div class="cc-select-option-image"><img :src="item.avatar" style="width:50px" /></div>
+                            <div class="cc-select-option-text">{{item.name}}</div>
                         </div>
                     </div>
                 </div>

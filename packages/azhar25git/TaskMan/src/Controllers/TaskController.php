@@ -44,6 +44,7 @@ class TaskController extends Controller
             'task.title' => 'required|string|max:255',
             'task.description' => 'required|string|max:1000',
             'task.project_type' => 'required|string|max:91',
+            'task.asignee_id' => 'required|integer',
             'task.user_ids.*.user_id' => 'sometimes|required|integer',            
         ]);
 
@@ -54,6 +55,7 @@ class TaskController extends Controller
             $newTask->title = $request->task['title'];
             $newTask->description = $request->task['description'];
             $newTask->project_type = $request->task['project_type'];
+            $newTask->asignee_id = $request->task['asignee_id'];
             
             $newTask->save();
             $users = $request->task['user_ids'];
@@ -64,7 +66,7 @@ class TaskController extends Controller
                 $newAssignable->save();
             }
             DB::commit();
-            return "Task assigned successfully.";
+            return $newTask;
         }
 
         catch (\Exception $e) {
@@ -72,6 +74,7 @@ class TaskController extends Controller
             DB::rollBack();
         }
 
+        // return var_export($users);
         return "Task not assigned.";
     }
 
@@ -113,6 +116,7 @@ class TaskController extends Controller
             'task.project_type' => 'required|string|max:91',
             'task.user_ids.*.user_id' => 'sometimes|required|integer',  
             'task.task_id' => 'required|integer',           
+            'task.asignee_id' => 'required|integer',           
         ]);
 
         try {
@@ -122,6 +126,7 @@ class TaskController extends Controller
             $existingTask->title = $request->task['title'];
             $existingTask->description = $request->task['description'];
             $existingTask->project_type = $request->task['project_type'];
+            $existingTask->asignee_id = $request->task['asignee_id'];
             
             $existingTask->save();
 
@@ -138,7 +143,7 @@ class TaskController extends Controller
             }
             DB::commit();
 
-            return "Task updated successfully.";
+            return $existingTask;
         }
 
         catch (\PDOException $e) {
@@ -173,7 +178,7 @@ class TaskController extends Controller
     public function searchAssignable($input)
     {
         $users = DB::table('users')->where('email', $input)
-        ->orWhere('name', 'like', '%' . $input . '%')->get(['name','email','id']);
+        ->orWhere('name', 'like', '%' . $input . '%')->get(['id','name','email','avatar']);
         return $users;
     }
     /**
@@ -188,11 +193,34 @@ class TaskController extends Controller
         if($task) {
             $users_id = Assignable::where('task_id', $task->id)->get('user_id');
             if(count($users_id)>0){
-                $users = User::whereIn('id', $users_id)->get(['id','name','email']);
+                $users = User::whereIn('id', $users_id)->get(['id','name','email','avatar']);
                 return $users;
             }
             return "Assigned To not found.";
         }
         return "Task not found.";
+    }
+
+    /**
+     * Get the users 
+     * 
+     * @param  none
+     * @return \Illuminate\Http\Response
+     */
+    public function getAssignedTo()
+    {
+        $users = User::limit(10)->get(['id','name','email','avatar']);
+        return $users;
+    }
+    /**
+     * Get the single user
+     * 
+     * @param  none
+     * @return \Illuminate\Http\Response
+     */
+    public function getAssignee($id)
+    {
+        $user = User::where('id',$id)->get(['id','name','email','avatar']);
+        return $user;
     }
 }

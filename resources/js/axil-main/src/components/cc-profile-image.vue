@@ -17,7 +17,7 @@ const props = defineProps({
     status:String,
     image:String,
 })
-
+// console.log('ccprofileimage',props);
 const statusColor = computed(() => {
     if(props.status == 'active'){
         return '#3EB75E'
