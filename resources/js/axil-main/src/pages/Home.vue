@@ -22,8 +22,8 @@
                     </div>
                     <div><CcButton label="New Task" color="#E0E2E8" :textSize="12" icon="plus" @click="newTaskEvent('todo')" :padding="1.2" /></div>
                 </div>
-                <div class="dragable-box">
-                    <draggable class="dragArea list-group" :list="toDo" group="task" item-key="id" >
+                <div class="dragable-box" @mouseenter="mouseFunc">
+                    <draggable class="dragArea list-group toDo" :list="toDo" group="task" item-key="id" >
                         <template #item="{ element }">
                             <div class="list-group-item todo-todo">
                                 <CcTaskCard :cardDetail="element" :userList="userList" :task_id="taskItem.id" />
@@ -40,7 +40,7 @@
                     </div>
                     <div><CcButton label="New Task" color="#E0E2E8" :textSize="12" icon="plus" @click="newTaskEvent('prog')" :padding="1.2" /></div>
                 </div>
-                <div class="dragable-box">
+                <div class="dragable-box" @mouseenter="mouseFunc">
                     <draggable class="dragArea list-group inPogress" :list="inPogress" group="task" item-key="id" >
                         <template #item="{ element }">
                             <div class="list-group-item progress-todo">
@@ -58,11 +58,11 @@
                     </div>
                     <div></div>
                 </div>
-                <div class="dragable-box">
-                    <draggable class="dragArea list-group" :list="doneTask" group="task" item-key="id" >
+                <div class="dragable-box" @mouseenter="mouseFunc">
+                    <draggable class="dragArea list-group done" :list="doneTask" group="task" item-key="id" >
                         <template #item="{ element }">
                             <div class="list-group-item done-todo">
-                                <div><CcTaskCard :cardDetail="element" :userList="userList" /></div>
+                                <div><CcTaskCard :cardDetail="element" :userList="userList" :assignee="assigneeUserId.value" /></div>
                             </div>
                         </template>
                     </draggable>
@@ -91,25 +91,32 @@
                     </div>
                     <div class="tsm-button-spacer"></div>
                 </div>
+                <div v-if="errors">
+                    <div v-for="err,index in errors" class="error" :key="index">{{ err[0] }}</div>
+                </div>
                 <div v-if="newTaskPage == 'gen'">
                     <!-- <input type="hidden" :value="taskItem.id"> -->
                     <div class="tsm-title">
+                        <small v-if="errors?.title">Title is invalid</small>
                         <CcInput v-model="taskItem.title" label="Title" placeHolder="Web Design"  />
                     </div>
                     <div class="tsm-description">
+                        <small v-if="errors?.description">Description is invalid</small>
                         <CcTextarea v-model="taskItem.description" :rows="4" label="Description" />
                     </div>
                     <div class="tsm-project-type">
+                        <small v-if="errors?.project_type">Project Type is invalid</small>
                         <CcSelect v-model="taskItem.type" :options="options" :rows="10" label="Project Type" />
                     </div>     
                 </div>
                 <div  v-if="newTaskPage == 'assign'">
                   <div class="tsm-employee-search">
+                      <small v-if="errors?.assigned_user">Employee is invalid</small>
                       <CcSearch v-model="srcEmployeeInput" @select="eployeeSelected" label="Search" :options="srcEmployeeOptions" />
                   </div>
                   <div class="tsm-employee-list">
-                      <div v-for="(item, index) in taskItem.assignedUser" :key="index" class="tsm-employee-list-item">
-                          <div  class="tsm-employee-list-image"><img :src="item.avatar" style="width:40px" /></div>
+                      <div v-for="(item, index) in taskItem.assigned_user" :key="index" class="tsm-employee-list-item">
+                          <div class="tsm-employee-list-image"><img :src="item.avatar" style="width:40px" /></div>
                           <div class="tsm-employee-list-text">{{item.name}}</div>
                           <div class="tsm-employee-list-delete">
                               <img src="/icons/close.svg" style="width:10px" />
@@ -142,7 +149,7 @@
     import draggable from 'vuedraggable'
     import lodash from 'lodash'
 
-    import { ref, reactive, onMounted, computed, watch  } from 'vue'
+    import { ref, reactive, onMounted, computed, watch, onUpdated  } from 'vue'
     import {useStore} from 'vuex'
 
     const store = useStore()
@@ -151,25 +158,27 @@
     const taskList = reactive([]);
     const modal = ref(false);
 
-    const toDo = computed(() =>  store.state.toDo) 
+    const toDo = computed(() =>  store.state.toDo)
     const inPogress = computed(() => store.state.inPogress) 
     const doneTask = computed(() => store.state.doneTask) 
     const toDoCount = computed(() => store.state.toDo.length) 
     const inPogressCount = computed(() => store.state.inPogress.length) 
     const doneTaskCount = computed(() => store.state.doneTask.length) 
+    const assigneeUserId = computed(() => store.state.assignee.id)
 
     //New Task Create
     const newTaskPage = ref('gen');
     const srcEmployeeInput = ref('');
-    const selectedEmployeeList = reactive([]);
+    const selectedEmployeeList = ref(null);
     const options = reactive(['Importent','Irrelevant', 'Default']);
     const taskItem = reactive({
         id:null,
         title:null,
         description: null,
         type:'Importent',
+        assignee: null,
         source:null,
-        assignedUser: [],
+        assigned_user: [],
     })
     const srcEmployeeOptions = computed(()=>{
         var re = new RegExp(srcEmployeeInput.value, "i");
@@ -182,51 +191,58 @@
     const newTaskEvent = (source) => {
         modal.value = true;
         taskItem.id = null;
-        taskItem.assignedUser.length = 0;
+        taskItem.assigned_user.length = 0;
         taskItem.title = null;
         taskItem.description = null;
         taskItem.source = source;
         taskItem.type = 'Importent';
+        taskItem.assignee = assigneeUserId.value;
         newTaskPage.value = 'gen';
+        console.log(taskItem)
     }
     const eployeeSelected = (e) => {
-        taskItem.assignedUser.push(e)
+        taskItem.assigned_user.push(e)
     }
     const savetaskItem = async () => {
         if(newTaskPage.value == 'gen'){
             newTaskPage.value = 'assign';
         }else{
             if(taskItem.source == 'todo'){
-                await callBackendGet();
-                if(taskItem.id != null){
-                    var newToDO = toDo.value;
+                let response = await store.dispatch('saveTask',taskItem);
+                if(!response.errors) {
+                    let newToDO = toDo.value;
                     newToDO.push(lodash.cloneDeep(taskItem));
                     store.commit('toDoUpdate', newToDO)
-                }else {
-                    console.log('taskItem.id = null');
+                    modal.value = false;
+                } else {
+                    errors.value = await response.errors
+                    console.log('errors.value',errors.value)
                 }
-                
             }
             if(taskItem.source == 'prog'){
-                await callBackendGet();
-                if(taskItem.id != null){
-                    var newInPogress = inPogress.value;
+                let response = await store.dispatch('saveTask',taskItem);
+                if(!response.errors) {
+                    let newInPogress = inPogress.value;
                     newInPogress.push(lodash.cloneDeep(taskItem));
                     store.commit('inPogressUpdate', newInPogress)
-                }else {
-                    console.log('taskItem.id = null');
+                    modal.value = false;
+                } else {
+                    errors.value = await response.errors
+                    console.log('errors.value',errors.value)
                 }
-                
             }
-            modal.value = false;            
+                        
         }
 
     }
+    // set errors
+    const errors = ref(null);
+
     watch([store.state.toDo, store.state.inPogress, store.state.doneTask], () => {
         store.commit('callSave')
     })
 
-    //Load innitials
+    //Load initials
     const requestUserList = async () =>{
         try{
             // var req = await axios.get('https://api.github.com/users')
@@ -235,79 +251,69 @@
             userList.push(...req);
         }catch(err){console.log(err)}
     }
-    const requestTaskList = async () =>{
-        try{
-            var req = await axios.get('tm-api/task')
-            console.log(req.data);
-            console.log("store.state.callSave",store.state.callSave);
-            let i;
-            if(store.state.callSave === 0) {
-                // console.log(Object.keys(req.data).length)
-                for( i in req.data ) {
-                    // console.log(req.data[i]);
-                    if(req.data[i].status === 'prog'){
-                        var newInPogress = inPogress.value;
-                        taskItem.id = req.data[i].id;
-                        taskItem.assignedUser = req.data[i].user_ids;
-                        taskItem.title = req.data[i].title;
-                        taskItem.description = req.data[i].description;
-                        taskItem.source = req.data[i].status;
-                        taskItem.type = req.data[i].project_type;
-                        newInPogress.push(lodash.cloneDeep(taskItem));
-                        store.commit('inPogressUpdate', newInPogress)
-                    }
-                    else if(req.data[i].status === 'todo'){
-                        // console.log(i);
-                        var newToDO = toDo.value;
-                        taskItem.id = req.data[i].id;
-                        taskItem.assignedUser = req.data[i].user_ids;
-                        taskItem.title = req.data[i].title;
-                        taskItem.description = req.data[i].description;
-                        taskItem.source = req.data[i].status;
-                        taskItem.type = req.data[i].project_type;
-                        newToDO.push(lodash.cloneDeep(taskItem));
-                        store.commit('toDoUpdate', newToDO)
-                    }
 
-                };
-            } 
-            // taskList.push(...req.data);
-        }catch(err){console.log(err)}
-    }
+    const getAllTasks = async () => {
+        if(toDoCount.value === 0){
+            var todos = await store.dispatch('getTodos');
+            // console.log('todos:',todos);
 
-    const callBackendGet = async () => {
-        var newusers = [];
-        var newuserId;
-        for (var i = 0; i < taskItem.assignedUser.length; i++) {
-            newuserId = taskItem.assignedUser[i].id;
-            newusers.push({"user_id":newuserId});
+            var newToDO = toDo.value;
+            // // modify taskItem
+            for(let i = 0; i < todos.length; i++) {
+                taskItem.id = todos[i].id;
+                taskItem.assigned_user = todos[i].assigned_user;
+                taskItem.title = todos[i].title;
+                taskItem.description = todos[i].description;
+                taskItem.source = todos[i].status;
+                taskItem.type = todos[i].project_type;
+                taskItem.assignee = todos[i].assignee;
+                newToDO.push(lodash.cloneDeep(taskItem));
+            }
+            
+            store.commit('toDoUpdate', newToDO)
+            // console.log(toDo.value)
         }
-        // console.log("newusers:", newusers);
-        await axios.post('tm-api/task', {
-            "task": {
-                "title": taskItem.title,
-                "description": taskItem.description,
-                "status": taskItem.source,
-                "project_type": taskItem.type,
-                "user_ids": newusers
+        if(inPogressCount.value === 0){
+            var inPogresses = await store.dispatch('getInPogress');
+            var newInPogress = inPogress.value;
+            for(let i = 0; i < inPogresses.length; i++) {
+                taskItem.id = inPogresses[i].id;
+                taskItem.assigned_user = inPogresses[i].assigned_user;
+                taskItem.title = inPogresses[i].title;
+                taskItem.description = inPogresses[i].description;
+                taskItem.source = inPogresses[i].status;
+                taskItem.type = inPogresses[i].project_type;
+                taskItem.assignee = inPogresses[i].assignee;
+                newInPogress.push(lodash.cloneDeep(taskItem));
             }
-        })
-        .then(response => {
-            if(response.status === 201){
-                taskItem.id = response.data.id
-                // console.log(taskItem);
-                return response.data.id;
+            store.commit('inPogressUpdate', newInPogress)
+        }
+        if(doneTaskCount.value === 0){
+            var doneTasks = await store.dispatch('getDoneTask');
+            var newDoneTask = doneTask.value;
+            for(let i = 0; i < doneTasks.length; i++) {
+                taskItem.id = doneTasks[i].id;
+                taskItem.assigned_user = doneTasks[i].assigned_user;
+                taskItem.title = doneTasks[i].title;
+                taskItem.description = doneTasks[i].description;
+                taskItem.source = doneTasks[i].status;
+                taskItem.type = doneTasks[i].project_type;
+                taskItem.assignee = doneTasks[i].assignee;
+                newDoneTask.push(lodash.cloneDeep(taskItem));
             }
-            console.log(response)
-        })
-        .catch(err =>{ 
-            console.log('tm-api:',err)
-            return err;
-            });
+            store.commit('doneTaskUpdate', newDoneTask)
+        }
     }
 
-    onMounted(async ()=>{
-        // console.log(lodash.cloneDeep(taskItem))
+    const mouseFunc = (e) => {
+        // console.log('todo', e.target.childNodes[0].classList[2])
+        // console.log(e.target)
+        // console.log('inPogress', e.target.childNodes.classList.contains('inPogress'))
+        // console.log('done', e.target.childNodes.classList.contains('done'))
+    }
+
+    onMounted(async () => {
+        await getAllTasks(); 
         requestUserList();
     })
 

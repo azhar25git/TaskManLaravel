@@ -4,6 +4,7 @@ namespace Azhar25git\TaskMan\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\User;
 
 class Task extends Model
 {
@@ -16,9 +17,9 @@ class Task extends Model
      */
     protected $table = 'tasks';
 
-    public function assigned_to() {
+    public function assigned_user() {
 
-        return $this->hasManyThrough(User::class, Assignable::class, 'user_id', 'id', 'id', 'id');
+        return $this->hasManyThrough(User::class, Assignable::class, 'task_id', 'id', 'id', 'user_id');
     }
     public function assignee() {
 

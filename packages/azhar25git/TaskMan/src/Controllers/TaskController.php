@@ -18,7 +18,17 @@ class TaskController extends Controller
      */
     public function index()
     {
-        return Task::orderBy('created_at', 'DESC')->limit(20)->get();
+        return Task::orderBy('created_at', 'DESC')->with('assigned_user')->limit(20)->get();
+    }
+
+    /**
+     * Display a filtered listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function getTasksByStatus(string $status)
+    {
+        return Task::where('status', strtolower($status))->orderBy('created_at', 'DESC')->with('assigned_user')->limit(20)->get();
     }
 
     /**
@@ -44,8 +54,10 @@ class TaskController extends Controller
             'task.title' => 'required|string|max:255',
             'task.description' => 'required|string|max:1000',
             'task.project_type' => 'required|string|max:91',
-            'task.asignee_id' => 'required|integer',
-            'task.user_ids.*.user_id' => 'sometimes|required|integer',            
+            'task.assignee_user_id' => 'required|integer',
+            'task.assigned_user' => 'required|array',            
+            'task.assigned_user.*' => 'required',            
+            'task.assigned_user.*.id' => 'required|integer',            
         ]);
 
         try {
@@ -55,17 +67,20 @@ class TaskController extends Controller
             $newTask->title = $request->task['title'];
             $newTask->description = $request->task['description'];
             $newTask->project_type = $request->task['project_type'];
-            $newTask->asignee_id = $request->task['asignee_id'];
+            $newTask->assignee_user_id = $request->task['assignee_user_id'];
             
             $newTask->save();
-            $users = $request->task['user_ids'];
+            $users = $request->task['assigned_user'];
+            $usersArray = [];
             foreach($users as $user){
                 $newAssignable = new Assignable;
                 $newAssignable->task_id = $newTask->id;
-                $newAssignable->user_id = $user["user_id"];
+                $newAssignable->user_id = $user["id"];
+                $usersArray[]= $user["id"];
                 $newAssignable->save();
             }
             DB::commit();
+            $newTask->assigned_user = $usersArray;
             return $newTask;
         }
 
@@ -113,10 +128,12 @@ class TaskController extends Controller
             'task.status' => 'required|string',
             'task.title' => 'required|string|max:255',
             'task.description' => 'required|string|max:1000',
-            'task.project_type' => 'required|string|max:91',
-            'task.user_ids.*.user_id' => 'sometimes|required|integer',  
-            'task.task_id' => 'required|integer',           
-            'task.asignee_id' => 'required|integer',           
+            'task.project_type' => 'required|string|max:91', 
+            'task.task_id' => 'required|integer',  
+            'task.assignee_user_id' => 'required|integer',
+            'task.assigned_user' => 'required|array',            
+            'task.assigned_user.*' => 'required',            
+            'task.assigned_user.*.id' => 'required|integer',           
         ]);
 
         try {
@@ -126,23 +143,24 @@ class TaskController extends Controller
             $existingTask->title = $request->task['title'];
             $existingTask->description = $request->task['description'];
             $existingTask->project_type = $request->task['project_type'];
-            $existingTask->asignee_id = $request->task['asignee_id'];
+            $existingTask->assignee_user_id = $request->task['assignee_user_id'];
             
             $existingTask->save();
 
             // delete existing Assignables
             Assignable::where('task_id', $existingTask->id)->delete();
 
-            $users = $request->task['user_ids'];
-
+            $users = $request->task['assigned_user'];
+            $usersArray = [];
             foreach($users as $user){
                 $newAssignable = new Assignable;
                 $newAssignable->task_id = $existingTask->id;
-                $newAssignable->user_id = $user["user_id"];
+                $newAssignable->user_id = $user["id"];
+                $usersArray[]= $user["id"];
                 $newAssignable->save();
             }
             DB::commit();
-
+            $existingTask->assigned_user = $usersArray;
             return $existingTask;
         }
 

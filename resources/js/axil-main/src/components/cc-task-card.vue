@@ -1,16 +1,16 @@
 <template>
     <div ref="cardRoot">
-        <div class="cc-task" :task_id="props.task_id">
+        <div class="cc-task" :task_id="props.cardDetail.id">
             <div class="cc-task-title"><CcTitle :fontSize="18" :status="props.cardDetail.type" :title="props.cardDetail.title" /></div>
             <div class="cc-task-description">{{props.cardDetail.description}}</div>
             <CcDivider />
             <div class="cc-task-option">
                 <div class="cc-task-users">
-                    <CcPropicList :height="32" :list="props.cardDetail.assignedUser" listTarget="avatar" />
+                    <CcPropicList :height="32" :list="props.cardDetail.assigned_user" listTarget="avatar" />
                 </div>
                 <div class="cc-task-btn">
                     <CcButtonDropdown>
-                        <div class="cc-button-dropdown-item" @click="editTaskEvent()">Edit</div>
+                        <div class="cc-button-dropdown-item" @click="editTaskEvent(props.cardDetail.source)">Edit</div>
                         <div class="cc-button-dropdown-item" @click="deleteData()">Delete</div>
                     </CcButtonDropdown>
                 </div>
@@ -37,26 +37,33 @@
                     </div>
                     <div class="tsm-button-spacer"></div>
                 </div>
+                <div v-if="errors">
+                    <div v-for="err,index in errors" class="error" :key="index">{{ err[0] }}</div>
+                </div>
                 <div v-if="editTaskPage == 'gen'">
                     <div class="tsm-title">
+                        
                         <CcInput v-model="taskItem.title" label="Title" placeHolder="Web Design"  />
                     </div>
                     <div class="tsm-description">
+                        
                         <CcTextarea v-model="taskItem.description" :rows="4" label="Description" />
                     </div>
                     <div class="tsm-project-type">
+                        
                         <CcSelect v-model="taskItem.type" :options="options" :rows="10" label="Project Type" />
                     </div>     
                 </div>
                 <div  v-if="editTaskPage == 'assign'">
                   <div class="tsm-employee-search">
+                      
                       <CcSearch v-model="srcEmployeeInput" @select="eployeeSelected" label="Search" :options="srcEmployeeOptions" />
                   </div>
                   <div class="tsm-employee-list">
-                      <div v-for="(item, index) in taskItem.assignedUser" :key="index" class="tsm-employee-list-item">
+                      <div v-for="(item) in taskItem.assigned_user" :key="item.id" class="tsm-employee-list-item">
                           <div  class="tsm-employee-list-image"><img :src="item.avatar" style="width:40px" /></div>
                           <div class="tsm-employee-list-text">{{item.name}}</div>
-                          <div class="tsm-employee-list-delete">
+                          <div class="tsm-employee-list-delete" @click="removeUser(item)">
                               <img src="/icons/close.svg" style="width:10px" />
                           </div>
                       </div>
@@ -82,7 +89,7 @@
     import CcInput from '../components/cc-input.vue'
     import CcTextarea from '../components/cc-textarea.vue'
     import CcSelect from '../components/cc-select.vue'    
-    import { defineProps, reactive, computed, ref } from 'vue'
+    import { defineProps, reactive, computed, ref, onMounted, onUpdated } from 'vue'
 
     import lodash from 'lodash'
     import {useStore} from 'vuex'
@@ -90,9 +97,12 @@
 
     const store = useStore()
 
+    const assigneeUserId = computed(() => store.state.assignee.id)
+
     const props = defineProps({
         cardDetail: Object,
         userList:Array,
+        assignee: Number,
     })
 
     const modal = ref(false);
@@ -104,18 +114,22 @@
         title:null,
         description: null,
         type:'Importent',
+        assignee: null,
         source:null,
-        assignedUser: [],
+        assigned_user: [],
     })
     const options = reactive(['Importent','Irrelevant', 'Default']);
     const editTaskEvent = (source) => {
         modal.value = true;
-        taskItem.id = props.task_id;
-        taskItem.assignedUser = lodash.cloneDeep(props.cardDetail.assignedUser);
+        taskItem.id = props.cardDetail.id;
+        taskItem.assigned_user = lodash.cloneDeep(props.cardDetail.assigned_user);
         taskItem.title = props.cardDetail.title;
         taskItem.description = props.cardDetail.description;
         taskItem.type = props.cardDetail.type;
+        taskItem.source = source;
+        taskItem.assignee = assigneeUserId.value;
         editTaskPage.value = 'gen';
+        // console.log(taskItem);
     }
     const srcEmployeeOptions = computed(()=>{
         var re = new RegExp(srcEmployeeInput.value, "i");
@@ -125,25 +139,35 @@
 
     })
     const eployeeSelected = (e) => {
-        taskItem.assignedUser.push(e)
+        taskItem.assigned_user.push(e)
     }
     const savetaskItem = async () => {
-        console.log(taskItem);
         var classes = cardRoot.value.parentElement;
         if(classes.closest('.todo-todo') != null){
+            taskItem.source = 'todo';
             var data = await store.state.toDo
         }
         if(classes.closest('.progress-todo') != null){
+            taskItem.source = 'prog';
             var data = await store.state.inPogress
         }   
         if(classes.closest('.done-todo') != null){
+            taskItem.source = 'done';
             var data = await store.state.doneTask
         } 
-        var index = data.indexOf(props.cardDetail)
-        await callBackendUpdate();
-        data[index]=lodash.cloneDeep(taskItem);
+        var index = await data.indexOf(props.cardDetail)
+        
+        let response = await store.dispatch('updateTask',taskItem)
+        // console.log('savetaskItem:response',response.errors);
+        if(!response.errors) {
+            
+            data[index]= await lodash.cloneDeep(taskItem);
 
-        modal.value = false;
+            modal.value = false;
+        } else {
+            errors.value = await response.errors
+            console.log('errors.value',errors.value)
+        }
     }
     const deleteData = async () => {
         await callBackendDelete();
@@ -161,43 +185,37 @@
         data.splice(index, 1);
     }
 
-    const callBackendUpdate = async () => {
-        console.log(props.cardDetail)
-        var newusers = [];
-        var newuserId;
-        for (var i = 0; i < taskItem.assignedUser.length; i++) {
-            newuserId = taskItem.assignedUser[i].id;
-            newusers.push({"user_id":newuserId});
-        }
-        await axios.put('tm-api/task/'+ props.task_id, {
-            "task": {
-                "task_id": props.task_id,
-                "title": taskItem.title,
-                "description": taskItem.description,
-                "status": taskItem.source,
-                "project_type": taskItem.type,
-                "user_ids": newusers
-            }
-        })
+    // set errors
+    const errors = ref(null);
+
+    const removeUser = async (user) => {
+        const index = taskItem.assigned_user.indexOf(await user);
+        console.log(await index)
+        taskItem.assigned_user = lodash.cloneDeep(taskItem.assigned_user.splice(index,1))
+        console.log(taskItem.assigned_user)
+    }
+
+    const callBackendDelete = async () => {
+        console.log('callBackendDelete', props.cardDetail)
+        // var newusers = [];
+        // var newuserId;
+        // for (var i = 0; i < taskItem.assigned_user.length; i++) {
+        //     newuserId = taskItem.assigned_user[i].id;
+        //     newusers.push({"user_id":newuserId});
+        // }
+        await axios.delete('tm-api/task/'+ props.cardDetail.id)
         .then(response => {
             console.log(response)
         })
         .catch(err =>{ console.log('tm-api:',err)});
     }
 
-    const callBackendDelete = async () => {
-        var newusers = [];
-        var newuserId;
-        for (var i = 0; i < taskItem.assignedUser.length; i++) {
-            newuserId = taskItem.assignedUser[i].id;
-            newusers.push({"user_id":newuserId});
-        }
-        await axios.delete('tm-api/task/'+ props.task_id)
-        .then(response => {
-            console.log(response)
-        })
-        .catch(err =>{ console.log('tm-api:',err)});
-    }
+    onMounted(() => {
+        // console.log(props)
+    })
+    onUpdated(() => {
+        // console.log('props.cardDetail',props.cardDetail)
+    })
 </script>
 
 <style lang="scss">
@@ -234,5 +252,10 @@
             display: flex;
             align-items: center;
         }
+    }
+    .error {
+        background: #ebe0de;
+        color: #905545;
+        border: 1px solid #f1f1f1;
     }
 </style>

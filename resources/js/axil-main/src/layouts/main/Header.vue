@@ -19,7 +19,7 @@
                 </div>
                 <div class="header-propic-container">
                     <!-- <CcProfileImage :height="45" image="https://avatars.githubusercontent.com/u/4?v=4" status="active" title="James Anderson" /> -->
-                    <CcProfileImage :height="45" v-model="assignee" :image="assignee.avatar" status="active" :title="assignee.name" />
+                    <CcProfileImage :height="45" :image="assignee.avatar" status="active" :title="assignee.name" />
                 </div>            
             </div>
         </div>
@@ -58,7 +58,9 @@
             name: valueNew.name,
             avatar: valueNew.avatar
         }
-        // console.log(assignee)
+        store.commit( 'setAssignee', assignee.value );
+        // console.log(store.getters.getAssignee)
+        // console.log(assignee.value.id)
     })
 </script>
 
