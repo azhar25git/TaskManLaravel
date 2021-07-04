@@ -25,7 +25,7 @@
                 <div class="dragable-box">
                     <draggable class="dragArea list-group toDo" :list="toDo" group="task" item-key="id">
                         <template #item="{ element }">
-                            <div class="list-group-item todo-todo" @drop="updateTaskItem(taskItem, $event)">
+                            <div class="list-group-item todo-todo" @drop="updateTaskItem(element, $event)">
                                 <CcTaskCard :cardDetail="element" :userList="userList" :task_id="taskItem.id" />
                             </div>
                         </template>
@@ -43,7 +43,7 @@
                 <div class="dragable-box">
                     <draggable class="dragArea list-group inPogress" :list="inPogress" group="task" item-key="id">
                         <template #item="{ element }">
-                            <div class="list-group-item pogress-todo" @drop="updateTaskItem(taskItem, $event)">
+                            <div class="list-group-item pogress-todo" @drop="updateTaskItem(element, $event)">
                                 <CcTaskCard :cardDetail="element" :userList="userList" />
                             </div>
                         </template>
@@ -61,7 +61,7 @@
                 <div class="dragable-box">
                     <draggable class="dragArea list-group done" :list="doneTask" group="task" item-key="id">
                         <template #item="{ element }">
-                            <div class="list-group-item done-todo" @drop="updateTaskItem(taskItem, $event)">
+                            <div class="list-group-item done-todo" @drop="updateTaskItem(element, $event)">
                                 <div><CcTaskCard :cardDetail="element" :userList="userList" :assignee="assigneeUserId.value" /></div>
                             </div>
                         </template>
@@ -153,6 +153,12 @@
     const userList = reactive([]);
     const taskList = reactive([]);
     const modal = ref(false);
+
+    let assignee = ref({
+        id: 0,
+        name: '',
+        avatar: ''
+    });
 
     const toDo = computed(() =>  store.state.toDo)
     const inPogress = computed(() => store.state.inPogress) 
@@ -246,19 +252,19 @@
         // Find where the task was dropped in
         droppedIn = await hasClass(dragPath,'toDo') || await hasClass(dragPath,'inPogress') || await hasClass(dragPath,'done');
         
-        // console.log('updateTaskItem droppedIn', droppedIn);
+        // console.log('updateTaskItem task', task);
         // if drag Path does not have 3 classes then display to console
         if(!droppedIn){
             console.log('updateTaskItem:dragPath',dragPath)
         }
         // Set the current task for update
-        taskItem.id = await task.id;
+        taskItem.id = task.id;
         taskItem.assigned_user = await lodash.cloneDeep(task.assigned_user);
-        taskItem.title = await task.title;
-        taskItem.description = await task.description;
+        taskItem.title = task.title;
+        taskItem.description = task.description;
         taskItem.source = droppedIn === 'toDo' ? 'todo' : droppedIn === 'inPogress' ? 'prog' : 'done';
-        taskItem.type = await task.type;
-        taskItem.assignee = await assigneeUserId.value;
+        taskItem.type = task.type;
+        taskItem.assignee = assigneeUserId.value;
 
         // console.log(taskItem)
 
@@ -268,7 +274,7 @@
         // console.log(data);
 
         // find index of the current Task in the respective state variable
-        var index = await data.indexOf(taskItem)
+        var index = data.indexOf(taskItem)
         // send update to database
         let response = await store.dispatch('updateTask',taskItem)
 
@@ -320,7 +326,7 @@
         }catch(err){console.log(err)}
     }
 
-    const getAllTasks = async () => {
+    const loadAllTasks = async () => {
         if(toDoCount.value === 0){
             var todos = await store.dispatch('getTodos');
             // console.log('todos:',todos);
@@ -373,9 +379,30 @@
         }
     }
 
+        const getAssigneeUser = async () => {
+        var user = await store.dispatch('getAssignee')
+        user = user[0]
+        return user
+    }
+
+    const assignUser = async () => {
+        let valueNew = await getAssigneeUser()
+        assignee.value =  {
+            id: valueNew.id,
+            name: valueNew.name,
+            avatar: valueNew.avatar
+        }
+        store.commit( 'setAssignee', assignee.value );
+        // console.log(store.getters.getAssignee)
+        // console.log(assignee.value.id)
+    }
+    
+
     onMounted(async () => {
-        await getAllTasks(); 
-        requestUserList();
+        // console.log('home:onMounted',store.getters.getAssignee);
+        await assignUser();
+        await loadAllTasks(); 
+        await requestUserList();
     })
 
 </script>

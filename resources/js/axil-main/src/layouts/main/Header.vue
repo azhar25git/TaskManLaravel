@@ -34,34 +34,14 @@
 
     import controller from './controller.js'
     const { menu, navbar, toggleMenu, menuTotalSpace} = controller;
-    import { ref, onMounted  } from 'vue'
+    import { ref, computed  } from 'vue'
     const select = ref(null)
     const ShowFullSearch = ref(false)
     import {useStore} from 'vuex'
 
     const store = useStore()
-    let assignee = ref({
-        id: 0,
-        name: '',
-        avatar: ''
-    });
-    const getAssigneeUser = async () => {
-        var user = await store.dispatch('getAssignee')
-        user = await user[0]
-        return user
-    }
 
-    onMounted(async () => {
-        let valueNew = await getAssigneeUser()
-        assignee.value =  {
-            id: valueNew.id,
-            name: valueNew.name,
-            avatar: valueNew.avatar
-        }
-        store.commit( 'setAssignee', assignee.value );
-        // console.log(store.getters.getAssignee)
-        // console.log(assignee.value.id)
-    })
+    let assignee = computed(() => store.state.assignee);
 </script>
 
 <style lang="scss">

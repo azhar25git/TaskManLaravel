@@ -84,7 +84,7 @@ export default createStore({
 
     },
     async getTodos({ commit }) {
-      const response = await axios.get('tm-api/gettasks/todo');
+      const response = await axios.get('tm-api/gettasks/todo/assignee/'+this.state.assignee.id);
       if(response.status === 200) {
         var todos = await response.data;
         // console.log('todos',await todos);
@@ -94,7 +94,7 @@ export default createStore({
       return;
     },
     async getInPogress({ commit }) {
-      const response = await axios.get('tm-api/gettasks/prog');
+      const response = await axios.get('tm-api/gettasks/prog/assignee/'+this.state.assignee.id);
       if(response.status === 200) {
         var allInPogress = await response.data;
         // console.log('allInPogress',await allInPogress);
@@ -103,7 +103,7 @@ export default createStore({
       return;
     },
     async getDoneTask({ commit }) {
-      const response = await axios.get('tm-api/gettasks/done');
+      const response = await axios.get('tm-api/gettasks/done/assignee/'+this.state.assignee.id);
       if(response.status === 200) {
         var allDoneTask = await response.data;
         // console.log('allDoneTask',await allDoneTask);
@@ -121,7 +121,8 @@ export default createStore({
       return;
     },
     async getAssignee({ commit }) {
-      const response = await axios.get('tm-api/getassignee/1');
+      let assigneeId = 1
+      const response = await axios.get('tm-api/getassignee/'+assigneeId);
       // console.log('getAssignee',response);
       if(response.status === 200) {
         var assignee = await response.data;

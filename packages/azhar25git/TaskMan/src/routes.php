@@ -12,7 +12,7 @@ Route::prefix('tm-api')->group(function () {
         Route::get('task/{task}/assigned', [TaskController::class, 'getAssigned'])->name('getassigned');
         Route::get('getassignee/{id}', [TaskController::class, 'getAssignee'])->name('getuser');
         Route::get('getassignedto', [TaskController::class, 'getAssignedTo'])->name('getusers');
-        Route::get('gettasks/{source}', [TaskController::class, 'getTasksBySource'])->name('gettasks');
+        Route::get('gettasks/{source}/assignee/{id}', [TaskController::class, 'getTasksBySource'])->name('gettasks');
         
     });
 

@@ -26,9 +26,35 @@ class TaskController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function getTasksBySource(string $source)
+    public function getTasksBySource(string $source, int $id)
     {
-        return Task::where('source', strtolower($source))->orderBy('created_at', 'DESC')->with('assigned_user')->limit(20)->get();
+        $userStatus = 'user';
+        if($id === 1) {
+            $userStatus = 'admin';
+        }
+        switch ($userStatus) {
+            case 'admin':
+                // return all the tasks
+                return Task::where('source', strtolower($source))
+                ->with('assigned_user')
+                ->orderBy('created_at', 'DESC')
+                ->limit(20)
+                ->get();
+
+            case 'user':
+                // return the tasks that user is the assignee or assigned_to
+                return Task::where('source', strtolower($source))
+                ->where('assignee_user_id', $id)
+                ->with(['assigned_user'=> function ($query) use ($id) {
+                    $query->orWhere('user_id', $id);
+                }])
+                ->orderBy('created_at', 'DESC')
+                ->limit(20)
+                ->get();
+
+            default:
+                return false;
+        }
     }
 
     /**
