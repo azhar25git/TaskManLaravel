@@ -48,7 +48,7 @@ export default createStore({
           title: task.title,
           description: task.description,
           project_type: task.type,
-          status: task.source,
+          source: task.source,
           assignee_user_id: task.assignee,
           assigned_user: task.assigned_user,
         }
@@ -67,7 +67,7 @@ export default createStore({
             title: task.title,
             description: task.description,
             project_type: task.type,
-            status: task.source,
+            source: task.source,
             assignee_user_id: task.assignee,
             assigned_user: task.assigned_user,
           }

@@ -26,9 +26,9 @@ class TaskController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function getTasksByStatus(string $status)
+    public function getTasksBySource(string $source)
     {
-        return Task::where('status', strtolower($status))->orderBy('created_at', 'DESC')->with('assigned_user')->limit(20)->get();
+        return Task::where('source', strtolower($source))->orderBy('created_at', 'DESC')->with('assigned_user')->limit(20)->get();
     }
 
     /**
@@ -50,7 +50,7 @@ class TaskController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'task.status' => 'required|string',
+            'task.source' => 'required|string',
             'task.title' => 'required|string|max:255',
             'task.description' => 'required|string|max:1000',
             'task.project_type' => 'required|string|max:91',
@@ -63,7 +63,7 @@ class TaskController extends Controller
         try {
             DB::beginTransaction();
             $newTask = new Task;
-            $newTask->status = $request->task['status'];
+            $newTask->source = $request->task['source'];
             $newTask->title = $request->task['title'];
             $newTask->description = $request->task['description'];
             $newTask->project_type = $request->task['project_type'];
@@ -125,7 +125,7 @@ class TaskController extends Controller
     public function update(Request $request, Task $task)
     {
         $validated = $request->validate([
-            'task.status' => 'required|string',
+            'task.source' => 'required|string',
             'task.title' => 'required|string|max:255',
             'task.description' => 'required|string|max:1000',
             'task.project_type' => 'required|string|max:91', 
@@ -139,7 +139,7 @@ class TaskController extends Controller
         try {
             DB::beginTransaction();
             $existingTask = $task;
-            $existingTask->status = $request->task['status'];
+            $existingTask->source = $request->task['source'];
             $existingTask->title = $request->task['title'];
             $existingTask->description = $request->task['description'];
             $existingTask->project_type = $request->task['project_type'];

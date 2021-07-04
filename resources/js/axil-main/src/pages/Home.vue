@@ -22,10 +22,10 @@
                     </div>
                     <div><CcButton label="New Task" color="#E0E2E8" :textSize="12" icon="plus" @click="newTaskEvent('todo')" :padding="1.2" /></div>
                 </div>
-                <div class="dragable-box" @mouseenter="mouseFunc">
-                    <draggable class="dragArea list-group toDo" :list="toDo" group="task" item-key="id" >
+                <div class="dragable-box">
+                    <draggable class="dragArea list-group toDo" :list="toDo" group="task" item-key="id">
                         <template #item="{ element }">
-                            <div class="list-group-item todo-todo">
+                            <div class="list-group-item todo-todo" @drop="updateTaskItem(taskItem, $event)">
                                 <CcTaskCard :cardDetail="element" :userList="userList" :task_id="taskItem.id" />
                             </div>
                         </template>
@@ -40,10 +40,10 @@
                     </div>
                     <div><CcButton label="New Task" color="#E0E2E8" :textSize="12" icon="plus" @click="newTaskEvent('prog')" :padding="1.2" /></div>
                 </div>
-                <div class="dragable-box" @mouseenter="mouseFunc">
-                    <draggable class="dragArea list-group inPogress" :list="inPogress" group="task" item-key="id" >
+                <div class="dragable-box">
+                    <draggable class="dragArea list-group inPogress" :list="inPogress" group="task" item-key="id">
                         <template #item="{ element }">
-                            <div class="list-group-item progress-todo">
+                            <div class="list-group-item pogress-todo" @drop="updateTaskItem(taskItem, $event)">
                                 <CcTaskCard :cardDetail="element" :userList="userList" />
                             </div>
                         </template>
@@ -58,10 +58,10 @@
                     </div>
                     <div></div>
                 </div>
-                <div class="dragable-box" @mouseenter="mouseFunc">
-                    <draggable class="dragArea list-group done" :list="doneTask" group="task" item-key="id" >
+                <div class="dragable-box">
+                    <draggable class="dragArea list-group done" :list="doneTask" group="task" item-key="id">
                         <template #item="{ element }">
-                            <div class="list-group-item done-todo">
+                            <div class="list-group-item done-todo" @drop="updateTaskItem(taskItem, $event)">
                                 <div><CcTaskCard :cardDetail="element" :userList="userList" :assignee="assigneeUserId.value" /></div>
                             </div>
                         </template>
@@ -97,21 +97,17 @@
                 <div v-if="newTaskPage == 'gen'">
                     <!-- <input type="hidden" :value="taskItem.id"> -->
                     <div class="tsm-title">
-                        <small v-if="errors?.title">Title is invalid</small>
                         <CcInput v-model="taskItem.title" label="Title" placeHolder="Web Design"  />
                     </div>
                     <div class="tsm-description">
-                        <small v-if="errors?.description">Description is invalid</small>
                         <CcTextarea v-model="taskItem.description" :rows="4" label="Description" />
                     </div>
                     <div class="tsm-project-type">
-                        <small v-if="errors?.project_type">Project Type is invalid</small>
                         <CcSelect v-model="taskItem.type" :options="options" :rows="10" label="Project Type" />
                     </div>     
                 </div>
                 <div  v-if="newTaskPage == 'assign'">
                   <div class="tsm-employee-search">
-                      <small v-if="errors?.assigned_user">Employee is invalid</small>
                       <CcSearch v-model="srcEmployeeInput" @select="eployeeSelected" label="Search" :options="srcEmployeeOptions" />
                   </div>
                   <div class="tsm-employee-list">
@@ -189,6 +185,7 @@
     })
 
     const newTaskEvent = (source) => {
+        errors.value = null
         modal.value = true;
         taskItem.id = null;
         taskItem.assigned_user.length = 0;
@@ -211,6 +208,8 @@
                 let response = await store.dispatch('saveTask',taskItem);
                 if(!response.errors) {
                     let newToDO = toDo.value;
+                    // console.log('Home response.data.id',response.data.id)
+                    taskItem.id = response.data.id;
                     newToDO.push(lodash.cloneDeep(taskItem));
                     store.commit('toDoUpdate', newToDO)
                     modal.value = false;
@@ -223,6 +222,8 @@
                 let response = await store.dispatch('saveTask',taskItem);
                 if(!response.errors) {
                     let newInPogress = inPogress.value;
+                    // console.log('Home response.id',response.id)
+                    taskItem.id = response.data.id;
                     newInPogress.push(lodash.cloneDeep(taskItem));
                     store.commit('inPogressUpdate', newInPogress)
                     modal.value = false;
@@ -235,6 +236,73 @@
         }
 
     }
+
+    // Updates the Task while drag n drop
+    const updateTaskItem = async (task, e) => {
+        // variable declaration
+        let dragPath = await e.path;
+        let droppedIn;
+        let data;
+        // Find where the task was dropped in
+        droppedIn = await hasClass(dragPath,'toDo') || await hasClass(dragPath,'inPogress') || await hasClass(dragPath,'done');
+        
+        // console.log('updateTaskItem droppedIn', droppedIn);
+        // if drag Path does not have 3 classes then display to console
+        if(!droppedIn){
+            console.log('updateTaskItem:dragPath',dragPath)
+        }
+        // Set the current task for update
+        taskItem.id = await task.id;
+        taskItem.assigned_user = await lodash.cloneDeep(task.assigned_user);
+        taskItem.title = await task.title;
+        taskItem.description = await task.description;
+        taskItem.source = droppedIn === 'toDo' ? 'todo' : droppedIn === 'inPogress' ? 'prog' : 'done';
+        taskItem.type = await task.type;
+        taskItem.assignee = await assigneeUserId.value;
+
+        // console.log(taskItem)
+
+        // get store state for respective state variable and set in data
+        data = droppedIn === 'toDo' ? await store.state.toDo : droppedIn === 'inPogress' ? await store.state.inPogress : await store.state.doneTask;
+
+        // console.log(data);
+
+        // find index of the current Task in the respective state variable
+        var index = await data.indexOf(taskItem)
+        // send update to database
+        let response = await store.dispatch('updateTask',taskItem)
+
+        if(!response.errors) {
+            
+            data[index]= await lodash.cloneDeep(taskItem);
+
+            // state update
+            droppedIn === 'toDo' ? store.commit('toDoUpdate', await data) : droppedIn === 'inPogress' ? store.commit('inPogressUpdate', await data) : store.commit('doneTaskUpdate', await data);
+
+            modal.value = false;
+        } else {
+            errors.value = await response.errors
+            console.log('errors.value',errors.value)
+        }
+        
+    }
+
+    // Custom function for traversing the Path for finding class string
+    const hasClass = (mdArray, needle) => {
+        for(let i = 0; i < mdArray.length; i++) {
+            // console.log('hasMatch: i', mdArray[i].classList)
+            for(let j = 0; j < mdArray[i].classList?.length; j++) {
+                // console.log('hasMatch: j', mdArray[i].classList[j])
+                if(mdArray[i].classList[j] === needle) {
+                    // console.log('hasMatch: match', needle)
+                    return needle;
+                }
+            }
+        }
+        // console.log('hasMatch: no match', needle);
+        return 0;
+    }
+
     // set errors
     const errors = ref(null);
 
@@ -303,13 +371,6 @@
             }
             store.commit('doneTaskUpdate', newDoneTask)
         }
-    }
-
-    const mouseFunc = (e) => {
-        // console.log('todo', e.target.childNodes[0].classList[2])
-        // console.log(e.target)
-        // console.log('inPogress', e.target.childNodes.classList.contains('inPogress'))
-        // console.log('done', e.target.childNodes.classList.contains('done'))
     }
 
     onMounted(async () => {

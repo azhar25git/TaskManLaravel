@@ -1,6 +1,6 @@
 <template>
     <div ref="cardRoot">
-        <div class="cc-task" :task_id="props.cardDetail.id">
+        <div class="cc-task">
             <div class="cc-task-title"><CcTitle :fontSize="18" :status="props.cardDetail.type" :title="props.cardDetail.title" /></div>
             <div class="cc-task-description">{{props.cardDetail.description}}</div>
             <CcDivider />
@@ -63,7 +63,7 @@
                       <div v-for="(item) in taskItem.assigned_user" :key="item.id" class="tsm-employee-list-item">
                           <div  class="tsm-employee-list-image"><img :src="item.avatar" style="width:40px" /></div>
                           <div class="tsm-employee-list-text">{{item.name}}</div>
-                          <div class="tsm-employee-list-delete" @click="removeUser(item)">
+                          <div class="tsm-employee-list-delete" @mouseup="removeUser(item)">
                               <img src="/icons/close.svg" style="width:10px" />
                           </div>
                       </div>
@@ -120,6 +120,7 @@
     })
     const options = reactive(['Importent','Irrelevant', 'Default']);
     const editTaskEvent = (source) => {
+        errors.value = null
         modal.value = true;
         taskItem.id = props.cardDetail.id;
         taskItem.assigned_user = lodash.cloneDeep(props.cardDetail.assigned_user);
@@ -143,11 +144,14 @@
     }
     const savetaskItem = async () => {
         var classes = cardRoot.value.parentElement;
+        // console.log('savetaskItem:classes',classes)
+        taskItem.assignee = assigneeUserId.value;
+
         if(classes.closest('.todo-todo') != null){
             taskItem.source = 'todo';
             var data = await store.state.toDo
         }
-        if(classes.closest('.progress-todo') != null){
+        if(classes.closest('.pogress-todo') != null){
             taskItem.source = 'prog';
             var data = await store.state.inPogress
         }   
@@ -155,6 +159,7 @@
             taskItem.source = 'done';
             var data = await store.state.doneTask
         } 
+        // console.log('savetaskItem:props.cardDetail',props.cardDetail)
         var index = await data.indexOf(props.cardDetail)
         
         let response = await store.dispatch('updateTask',taskItem)
@@ -162,47 +167,43 @@
         if(!response.errors) {
             
             data[index]= await lodash.cloneDeep(taskItem);
-
+            if(taskItem.source == 'todo'){ store.commit('toDoUpdate', await data) }
+            if(taskItem.source == 'prog'){ store.commit('inPogressUpdate', await data) }
+            if(taskItem.source == 'done'){ store.commit('doneTaskUpdate', await data) }
+            
             modal.value = false;
         } else {
             errors.value = await response.errors
-            console.log('errors.value',errors.value)
+            // console.log('errors.value',errors.value)
         }
     }
     const deleteData = async () => {
-        await callBackendDelete();
-        var classes = cardRoot.value.parentElement;
-        if(classes.closest('.todo-todo') != null){
-            var data = await store.state.toDo
+        if(confirm('Are you sure?')){
+            await callBackendDelete();
+            var classes = cardRoot.value.parentElement;
+            if(classes.closest('.todo-todo') != null){
+                var data = await store.state.toDo
+            }
+            if(classes.closest('.progress-todo') != null){
+                var data = await store.state.inPogress
+            }   
+            if(classes.closest('.done-todo') != null){
+                var data = await store.state.doneTask
+            } 
+            var index = data.indexOf(props.cardDetail)
+            data.splice(index, 1);
         }
-        if(classes.closest('.progress-todo') != null){
-            var data = await store.state.inPogress
-        }   
-        if(classes.closest('.done-todo') != null){
-            var data = await store.state.doneTask
-        } 
-        var index = data.indexOf(props.cardDetail)
-        data.splice(index, 1);
     }
 
     // set errors
     const errors = ref(null);
 
-    const removeUser = async (user) => {
-        const index = taskItem.assigned_user.indexOf(await user);
-        console.log(await index)
-        taskItem.assigned_user = lodash.cloneDeep(taskItem.assigned_user.splice(index,1))
-        console.log(taskItem.assigned_user)
+    const removeUser = (user) => {
+        const index = taskItem.assigned_user.indexOf(user);
+        taskItem.assigned_user.splice(index,1)
     }
 
     const callBackendDelete = async () => {
-        console.log('callBackendDelete', props.cardDetail)
-        // var newusers = [];
-        // var newuserId;
-        // for (var i = 0; i < taskItem.assigned_user.length; i++) {
-        //     newuserId = taskItem.assigned_user[i].id;
-        //     newusers.push({"user_id":newuserId});
-        // }
         await axios.delete('tm-api/task/'+ props.cardDetail.id)
         .then(response => {
             console.log(response)
