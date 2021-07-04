@@ -179,7 +179,11 @@
     }
     const deleteData = async () => {
         if(confirm('Are you sure?')){
-            await callBackendDelete();
+
+            let response = await store.dispatch('deleteTask', props.cardDetail.id);
+            console.log(response);
+            alert(response);
+            
             var classes = cardRoot.value.parentElement;
             if(classes.closest('.todo-todo') != null){
                 var data = await store.state.toDo
@@ -204,11 +208,12 @@
     }
 
     const callBackendDelete = async () => {
-        await axios.delete('tm-api/task/'+ props.cardDetail.id)
-        .then(response => {
-            console.log(response)
-        })
-        .catch(err =>{ console.log('tm-api:',err)});
+        // await axios.delete('tm-api/task/'+ props.cardDetail.id)
+        // .then(response => {
+        //     console.log(response)
+        // })
+        // .catch(err =>{ console.log('tm-api:',err)});
+        let response = await store.dispatch('deleteTask', props.cardDetail.id)
     }
 
     onMounted(() => {

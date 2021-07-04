@@ -83,6 +83,18 @@ export default createStore({
       }
 
     },
+    async deleteTask({ commit }, id) {
+      let response = await axios.delete('tm-api/task/'+ id)
+        .then(res => {
+            console.log('deleteTask:',res.data)
+            return res.data
+        })
+        .catch(err =>{ 
+          console.log('deleteTask:',err.data) ;
+          return err.data
+        });
+        return response;
+    },
     async getTodos({ commit }) {
       const response = await axios.get('tm-api/gettasks/todo/assignee/'+this.state.assignee.id);
       if(response.status === 200) {

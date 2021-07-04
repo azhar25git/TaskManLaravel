@@ -28,11 +28,12 @@ class TaskController extends Controller
      */
     public function getTasksBySource(string $source, int $id)
     {
-        $userStatus = 'user';
+        $userRole = 'user';
         if($id === 1) {
-            $userStatus = 'admin';
+            $userRole = 'admin';
         }
-        switch ($userStatus) {
+        // switch results based on the user role
+        switch ($userRole) {
             case 'admin':
                 // return all the tasks
                 return Task::where('source', strtolower($source))

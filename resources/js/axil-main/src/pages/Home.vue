@@ -201,7 +201,7 @@
         taskItem.type = 'Importent';
         taskItem.assignee = assigneeUserId.value;
         newTaskPage.value = 'gen';
-        console.log(taskItem)
+        // console.log(taskItem)
     }
     const eployeeSelected = (e) => {
         taskItem.assigned_user.push(e)
